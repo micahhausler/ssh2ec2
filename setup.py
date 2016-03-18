@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setup(
     name="ssh2ec2",
-    version="0.1",
+    version="0.2",
     author="Mike Ryan",
     author_email="mike@awssystemadministration.com",
     description="SSH into EC2 instances via tags and metadata filters",
