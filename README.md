@@ -41,6 +41,7 @@ credentials and default region are available in a config file or environment var
 ## Supported Filters
 
 |Name               | Description       |
+|---                |---                |
 |availability-zone  | The Availability Zone of the instance. |
 |image-id|			The ID of the image used to launch the instance.|
 |instance-id|			The ID of the instance.|
@@ -51,7 +52,7 @@ credentials and default region are available in a config file or environment var
 |tag:key=value|			The key/value combination of a tag assigned to the resource, where tag:key is the tag's key.|
 |tag-key|			The key of a tag assigned to the resource. This filter is independent of the tag-value filter. For example, if you use both the filter "tag-key=Purpose" and the filter "tag-value=X", you get any resources assigned both the tag key Purpose (regardless of what the tag's value is), and the tag value X (regardless of what the tag's key is). If you want to list only resources where Purpose is X, see the tag:key=value filter.|
 |tag-value|			The value of a tag assigned to the resource. This filter is independent of the tag-key filter.|
-|tenancy|			The tenancy of an instance (dedicated | default | host).|
+|tenancy|			The tenancy of an instance (dedicated, default, host).|
 |vpc-id|			The ID of the VPC that the instance is running in.|
 
 
