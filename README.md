@@ -4,6 +4,8 @@ A little helper script to simplify connecting to an EC2 instance via SSH.
 
 Specify some tags and metadata to filter your instances, and you'll be connected to an instance in the matching set.
 
+See the [blog post](http://awssystemadministration.com/ssh2ec2-connect-to-instances-using-tags-and-metadata-instead-of-hostnames/) for more details.
+
 ## Usage Examples
 
 Open an SSH connection to a random instance that matches the given filters:
