@@ -70,6 +70,10 @@ def parse_args():
     # AWS connection args
     parser.add_argument('--credentials-profile',
                         help='The name of a profile configured in the AWS credentials file')
+    parser.add_argument('--mfa-serial-number',
+                        help='Serial number of a multi-factor auth device')
+    parser.add_argument('--mfa-token',
+                        help='Current MFA token')
     # SSH args
     parser.add_argument('--ssh-user', help='Username to use for SSH connection')
     parser.add_argument('--ssh-args', default='', help='Additional arguments for SSH')
@@ -83,13 +87,31 @@ def parse_args():
 def main():
 
     args = parse_args()
-    # Retrieve a list of instances that match the filters
+
+    if args.mfa_token:
+        try:
+            sts_conn = boto.connect_sts(profile_name=args.credentials_profile)
+        except boto.provider.ProfileNotFoundError:
+            print 'Credentials profile "%s" not found' % args.credentials_profile
+            sys.exit(1)
+
+        try:
+            session_token = sts_conn.get_session_token(mfa_serial_number=args.mfa_serial_number,
+                                                    mfa_token=args.mfa_token)
+        except boto.exception.BotoServerError, e:
+            print 'Error %s: %s. %s' % (e.status, e.error_code, e.message)
+            sys.exit(1)
+    else:
+        session_token = None
+
     try:
-        conn = boto.connect_ec2(profile_name=args.credentials_profile)
+        conn = boto.connect_ec2(profile_name=args.credentials_profile,
+                                security_token=session_token)
     except boto.provider.ProfileNotFoundError:
         print 'Credentials profile "%s" not found' % args.credentials_profile
         sys.exit(1)
 
+    # Retrieve a list of instances that match the filters
     instances = conn.get_only_instances(filters=get_filters(args))
     if len(instances) == 0:
         print 'No instances matching criteria'

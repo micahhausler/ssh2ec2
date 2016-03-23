@@ -45,6 +45,10 @@ used with the --credentials-profile argument:
 
     ssh2ec2 --credentials-profile profile_name ...
 
+Multi-Factor Authentication devices are supported:
+
+    ssh2ec2 --mfa-serial-number xyz --mfa-token 123
+
 
 ## Supported Filters
 
