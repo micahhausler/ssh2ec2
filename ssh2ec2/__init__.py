@@ -67,6 +67,9 @@ def parse_args():
     parser.add_argument('--key-name')
     parser.add_argument('--subnet-id')
     parser.add_argument('--vpc-id')
+    # AWS connection args
+    parser.add_argument('--credentials-profile',
+                        help='The name of a profile configured in the AWS credentials file')
     # SSH args
     parser.add_argument('--ssh-user', help='Username to use for SSH connection')
     parser.add_argument('--ssh-args', default='', help='Additional arguments for SSH')
@@ -81,7 +84,12 @@ def main():
 
     args = parse_args()
     # Retrieve a list of instances that match the filters
-    conn = boto.connect_ec2()
+    try:
+        conn = boto.connect_ec2(profile_name=args.credentials_profile)
+    except boto.provider.ProfileNotFoundError:
+        print 'Credentials profile "%s" not found' % args.credentials_profile
+        sys.exit(1)
+
     instances = conn.get_only_instances(filters=get_filters(args))
     if len(instances) == 0:
         print 'No instances matching criteria'

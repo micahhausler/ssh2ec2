@@ -40,6 +40,12 @@ This script does not require any specific configuration. However, it does assume
 credentials and default region are available in a config file or environment variables. See the 
 [AWS documentation](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#config-settings-and-precedence) for more details.
 
+If you have multiple sets of credentials in your `~/.aws/credentials` file you can select which one will be
+used with the --credentials-profile argument:
+
+    ssh2ec2 --credentials-profile profile_name ...
+
+
 ## Supported Filters
 
 |Name               | Description       |
