@@ -11,11 +11,11 @@ See the [blog post](http://awssystemadministration.com/ssh2ec2-connect-to-instan
 Open an SSH connection to a random instance that matches the given filters:
 
     ssh2ec2 --tag Name=nginx
-    
+
     ssh2ec2 --tag role=web --tag environment=production
-    
+
     ssh2ec2 --availability-zone us-east-1a --instance-type t2.micro
- 
+
     ssh2ec2 --tag role=web --ssh-user ubuntu
 
 Pass commands to SSH for execution on the remote host:
@@ -37,13 +37,18 @@ Execute the same command on all instances matching the filters:
     pip install ssh2ec2
 
 This script does not require any specific configuration. However, it does assume that your AWS
-credentials and default region are available in a config file or environment variables. See the 
+credentials and default region are available in a config file or environment variables. See the
 [AWS documentation](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#config-settings-and-precedence) for more details.
 
 If you have multiple sets of credentials in your `~/.aws/credentials` file you can select which one will be
-used with the --credentials-profile argument:
+used with the --profile argument:
 
-    ssh2ec2 --credentials-profile profile_name ...
+    ssh2ec2 --profile profile_name ...
+
+Multi-Factor Authentication devices are supported, but you must use the `mfa_serial` directive in your `~/.aws/credentials`:
+
+    $ ssh2ec2 --profile prod --tag role=web
+    Enter MFA code:
 
 
 ## Supported Filters
