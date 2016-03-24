@@ -45,7 +45,7 @@ used with the --profile argument:
 
     ssh2ec2 --profile profile_name ...
 
-Multi-Factor Authentication devices are supported, but you must use the `mfa_serial` directive in your `~/.aws/credentials`:
+Multi-Factor Authentication devices are supported, but you must use the `mfa_serial` directive in your `~/.aws/config`:
 
     $ ssh2ec2 --profile prod --tag role=web
     Enter MFA code:
