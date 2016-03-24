@@ -1,5 +1,6 @@
 import argparse
-import boto
+import boto3
+from botocore.exceptions import ProfileNotFound
 import sys
 import random
 import os
@@ -7,44 +8,82 @@ import os
 
 def get_filters(args):
     """ Return a dict of filters based on the given arguments """
-    filters = {}
+    filters = [
+        {
+            'Name': 'instance-state-name',
+            'Values': ['running']
+        }
+    ]
 
     if args.tag:
         for t in args.tag:
-            k, v = t.split('=') # TODO error checking
-            filters['tag:%s' % k] = v
+            k, v = t.split('=')  # TODO error checking
+            filters.append({
+                'Name': 'tag:{}'.format(k),
+                'Values': [v]
+            })
 
     if args.has_tag_key:
         for k in args.has_tag_key:
-            filters['tag-key'] = k
+            filters.append({
+                'Name': 'tag-key',
+                'Values': [k]
+            })
 
     if args.has_tag_value:
         for v in args.has_tag_value:
-            filters['tag-value'] = v
+            filters.append({
+                'Name': 'tag-value',
+                'Values': [v]
+            })
 
     if args.availability_zone:
-        filters['availability_zone'] = args.availability_zone
+        filters.append({
+            'Name': 'availability-zone',
+            'Values': [args.availability_zone]
+        })
 
     if args.image_id:
-        filters['image-id'] = args.image_id
+        filters.append({
+            'Name': 'image-id',
+            'Values': [args.image_id]
+        })
 
     if args.instance_id:
-        filters['instance-id'] = args.instance_id
+        filters.append({
+            'Name': 'instance-id',
+            'Values': [args.instance_id]
+        })
 
     if args.instance_type:
-        filters['instance-type'] = args.instance_type
+        filters.append({
+            'Name': 'instance-type',
+            'Values': [args.instance_type]
+        })
 
     if args.security_group:
-        filters['instance.group-name'] = args.security_group
+        filters.append({
+            'Name': 'instance.group-name',
+            'Values': [args.security_group]
+        })
 
     if args.key_name:
-        filters['key-name'] = args.key_name
+        filters.append({
+            'Name': 'key-name',
+            'Values': [args.key_name]
+        })
 
     if args.subnet_id:
-        filters['subnet-id'] = args.subnet_id
+        filters.append({
+            'Name': 'subnet-id',
+            'Values': [args.subnet_id]
+        })
 
     if args.vpc_id:
-        filters['vpc-id'] = args.vpc_id
+        filters.append({
+            'Name': 'vpc-id',
+            'Values': [args.vpc_id]
+        })
 
     return filters
 
@@ -68,12 +107,10 @@ def parse_args():
     parser.add_argument('--subnet-id')
     parser.add_argument('--vpc-id')
     # AWS connection args
-    parser.add_argument('--credentials-profile',
+    parser.add_argument('--profile',
                         help='The name of a profile configured in the AWS credentials file')
-    parser.add_argument('--mfa-serial-number',
-                        help='Serial number of a multi-factor auth device')
-    parser.add_argument('--mfa-token',
-                        help='Current MFA token')
+    parser.add_argument('--region',
+                        help='The name of the AWS region')
     # SSH args
     parser.add_argument('--ssh-user', help='Username to use for SSH connection')
     parser.add_argument('--ssh-args', default='', help='Additional arguments for SSH')
@@ -84,47 +121,33 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def main():
 
     args = parse_args()
 
-    if args.mfa_token:
-        try:
-            sts_conn = boto.connect_sts(profile_name=args.credentials_profile)
-        except boto.provider.ProfileNotFoundError:
-            print 'Credentials profile "%s" not found' % args.credentials_profile
-            sys.exit(1)
-
-        try:
-            session_token = sts_conn.get_session_token(mfa_serial_number=args.mfa_serial_number,
-                                                    mfa_token=args.mfa_token)
-        except boto.exception.BotoServerError, e:
-            print 'Error %s: %s. %s' % (e.status, e.error_code, e.message)
-            sys.exit(1)
-    else:
-        session_token = None
-
     try:
-        conn = boto.connect_ec2(profile_name=args.credentials_profile,
-                                security_token=session_token)
-    except boto.provider.ProfileNotFoundError:
-        print 'Credentials profile "%s" not found' % args.credentials_profile
+        boto3.setup_default_session(profile_name=args.profile, region_name=args.region)
+        conn = boto3.client('ec2')
+    except ProfileNotFound as e:
+        print(e)
         sys.exit(1)
 
     # Retrieve a list of instances that match the filters
-    instances = conn.get_only_instances(filters=get_filters(args))
-    if len(instances) == 0:
-        print 'No instances matching criteria'
+    reservations = conn.describe_instances(Filters=get_filters(args))
+    if len(reservations['Reservations']) == 0:
+        print('No instances matching criteria')
         sys.exit(1)
 
-    instance_dns_names = []
+    instance_dns_names = [[
+        instance['PublicDnsName'] for instance in reservation['Instances']][0]
+        for reservation
+        in reservations['Reservations']]
     if args.all_matching_instances:
-        for instance in instances:
-            instance_dns_names.append(instance.public_dns_name)
+        pass
     else:
         # Pick a random instance from the results
-        instance = instances[random.randrange(0, len(instances))]
-        instance_dns_names.append(instance.public_dns_name)
+        instance_dns_names = [instance_dns_names[random.randrange(0, len(instance_dns_names))]]
 
     if args.command:
         remote_command = ' '.join(args.command)
