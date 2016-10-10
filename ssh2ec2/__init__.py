@@ -139,10 +139,12 @@ def main():
         print('No instances matching criteria')
         sys.exit(1)
 
-    instance_dns_names = [[
-        instance['PublicDnsName'] for instance in reservation['Instances']][0]
-        for reservation
-        in reservations['Reservations']]
+    instance_dns_names = [
+            instance['PublicDnsName']
+            for reservation
+            in reservations['Reservations']
+            for instance
+            in reservation['Instances']]
     if args.all_matching_instances:
         pass
     else:
